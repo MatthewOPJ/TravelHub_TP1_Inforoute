@@ -45,7 +45,7 @@ class Trip(models.Model):
         if self.pk:
             validators.check_trip_covers_destinations(self)
             
-class Participation(models.Model):
+class Participation(models.Model): # Cette class vient faire le lien entre son utilisateur(propriétaire) et le voyage en question
     class Role(models.TextChoices):
         OWNER = "owner", "Propriétaire"
         EDITOR = "editor", "Éditeur"
