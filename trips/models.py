@@ -4,7 +4,7 @@ from django.db import models
 from django.db.models import F, Q
 from . import validators
 
-class Trip(models.Model):
+class Trip(models.Model): # Cette classe est pour le voyage, elle gère les informations liées au voyage ainsi que ses participants et ses propriétaires
     class Status(models.TextChoices):
         DRAFT = "draft", "Brouillon"
         PLANNED = "planned", "Planifié"
@@ -40,14 +40,14 @@ class Trip(models.Model):
     def __str__(self):
         return self.title
     
-    def clean(self): # Cette fonction est là pour aller vérifier les dates des voyages
+    def clean(self):
         validators.check_trip_dates(self.start_date, self.end_date)
         if self.pk:
             validators.check_trip_covers_destinations(self)
 
         
             
-class Participation(models.Model): # Cette class vient faire le lien entre son utilisateur(propriétaire) et le voyage en question
+class Participation(models.Model): # Cette classe vient faire le lien entre son utilisateur(propriétaire) et le voyage en question
     class Role(models.TextChoices):
         OWNER = "owner", "Propriétaire"
         EDITOR = "editor", "Éditeur"
@@ -70,7 +70,7 @@ class Participation(models.Model): # Cette class vient faire le lien entre son u
     
     
     
-class Destination(models.Model):
+class Destination(models.Model): # Cette classe gère les destinations différentes d'un voyage et leurs informations liées.
     trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name="destinations")
     city = models.CharField(max_length=100)
     country = models.CharField(max_length=100)
@@ -97,7 +97,7 @@ class Destination(models.Model):
             
             
 
-class Activity(models.Model):
+class Activity(models.Model): # Cette classe permet de gérer les actions(planifier, catégoriser, etc) de chaque activité par destination.
     class Category(models.TextChoices):
         CULTURE = "culture", "Culture"
         FOOD = "food", "Gastronomie"
