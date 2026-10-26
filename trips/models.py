@@ -36,5 +36,11 @@ class Trip(models.Model):
                 name="trip_end_after_start",
             ),
         ]
+        
     def __str__(self):
         return self.title
+    
+    def clean(self):
+        validators.check_trip_dates(self.start_date, self.end_date)
+        if self.pk:
+            validators.check_trip_covers_destinations(self)
