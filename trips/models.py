@@ -94,3 +94,40 @@ class Destination(models.Model):
         validators.check_destination_dates(self.trip, self.arrival_date, self.departure_date)
         if self.pk:
             validators.check_destination_covers_activities(self)
+            
+            
+
+class Activity(models.Model):
+    class Category(models.TextChoices):
+        CULTURE = "culture", "Culture"
+        FOOD = "food", "Gastronomie"
+        SPORT = "sport", "Sport"
+        NATURE = "nature", "Nature"
+        TRANSPORT = "transport", "Transport"
+        LEISURE = "leisure", "Loisirs"
+        OTHER = "other", "Autre"
+    destination = models.ForeignKey(Destination, on_delete=models.CASCADE,
+        related_name="activities")
+    name = models.CharField(max_length=150)
+    description = models.TextField(blank=True)
+    category = models.CharField(max_length=20, choices=Category.choices, default=Category.OTHER)
+    date = models.DateField()
+    cost = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        default=0,
+        validators=[MinValueValidator(0)],
+    )
+    class Meta:
+        ordering = ["date", "id"]
+        verbose_name_plural = "activities"
+        constraints = [
+            models.CheckConstraint(condition=Q(cost__gte=0), name="activity_cost_positive"),
+        ]
+    def __str__(self):
+        return self.name
+    
+    def clean(self):
+        if not self.destination_id:
+            return
+        validators.check_activity_date(self.destination, self.date)
