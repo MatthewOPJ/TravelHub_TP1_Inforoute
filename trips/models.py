@@ -40,7 +40,7 @@ class Trip(models.Model):
     def __str__(self):
         return self.title
     
-    def clean(self):
+    def clean(self): # Cette fonction est là pour aller vérifier les dates des voyages
         validators.check_trip_dates(self.start_date, self.end_date)
         if self.pk:
             validators.check_trip_covers_destinations(self)
