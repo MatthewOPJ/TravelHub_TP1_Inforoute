@@ -1,6 +1,9 @@
 from django.core.exceptions import ValidationError
 from django.db.models import Max, Min
 
+# Se fichier à pour but d'assurer le respect des règles dicté par le système qu'on veut mettre en place afin de réduire la possibilité d'erreurs.
+# Également, sa nous sert d'encrage dans 1 fichier au lieu de copier les règles dans l'API REST et GraphQL quand on va les créer.
+
 def check_trip_dates(start_date, end_date): # La date de fin ne peut pas précéder la date de début.
     if start_date and end_date and end_date < start_date:
         raise ValidationError(
