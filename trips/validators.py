@@ -33,3 +33,16 @@ def check_destination_dates(trip, arrival_date, departure_date): # Les dates d'u
         raise ValidationError(
             {"departure_date": "Le départ ne peut pas dépasser la fin du voyage."}
         )
+        
+def check_destination_covers_activities(destination): # Si on change les dates d'une destination, ses activités doivent rester dedans.
+    if not (destination.arrival_date and destination.departure_date):
+        return
+    limits = destination.activities.aggregate(first=Min("date"), last=Max("date"))
+    if limits["first"] and limits["first"] < destination.arrival_date:
+        raise ValidationError(
+            {"arrival_date": "Une activité a lieu avant cette date d'arrivée."}
+        )
+    if limits["last"] and limits["last"] > destination.departure_date:
+        raise ValidationError(
+            {"departure_date": "Une activité a lieu après cette date de départ."}
+        )
