@@ -1,6 +1,8 @@
 from django.contrib import admin
 from .models import Activity, Destination, Participation, Trip
 
+#En plus de ceci, le superutilisateur est créé
+
 class ParticipationInline(admin.TabularInline):
     model = Participation
     extra = 0
