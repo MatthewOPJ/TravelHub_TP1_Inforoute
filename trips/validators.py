@@ -46,3 +46,9 @@ def check_destination_covers_activities(destination): # Si on change les dates d
         raise ValidationError(
             {"departure_date": "Une activité a lieu après cette date de départ."}
         )
+        
+def check_activity_date(destination, date): # La date d'une activité doit tomber pendant le séjour dans la destination.
+    if date and not (destination.arrival_date <= date <= destination.departure_date):
+        raise ValidationError(
+            {"date": "La date de l'activité doit être comprise entre l'arrivée et le départ de la destination."}
+        )
