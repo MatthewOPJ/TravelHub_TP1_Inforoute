@@ -44,6 +44,8 @@ class Trip(models.Model):
         validators.check_trip_dates(self.start_date, self.end_date)
         if self.pk:
             validators.check_trip_covers_destinations(self)
+
+        
             
 class Participation(models.Model): # Cette class vient faire le lien entre son utilisateur(propriétaire) et le voyage en question
     class Role(models.TextChoices):
@@ -62,5 +64,33 @@ class Participation(models.Model): # Cette class vient faire le lien entre son u
         constraints = [
             models.UniqueConstraint(fields=["trip", "user"], name="unique_participation"),
         ]
+        
     def __str__(self):
-        return f"{self.user} - {self.trip} ({self.role})"           
+        return f"{self.user} - {self.trip} ({self.role})"
+    
+    
+    
+class Destination(models.Model):
+    trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name="destinations")
+    city = models.CharField(max_length=100)
+    country = models.CharField(max_length=100)
+    arrival_date = models.DateField()
+    departure_date = models.DateField()
+    class Meta:
+        ordering = ["arrival_date", "id"]
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(departure_date__gte=F("arrival_date")),
+                name="destination_departure_after_arrival",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.city}, {self.country}"
+    
+    def clean(self):
+        if not self.trip_id:
+            return
+        validators.check_destination_dates(self.trip, self.arrival_date, self.departure_date)
+        if self.pk:
+            validators.check_destination_covers_activities(self)
