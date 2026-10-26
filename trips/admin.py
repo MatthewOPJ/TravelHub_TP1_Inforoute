@@ -1,6 +1,6 @@
 from django.contrib import admin
-
 from .models import Activity, Destination, Participation, Trip
+
 class ParticipationInline(admin.TabularInline):
     model = Participation
     extra = 0
@@ -14,7 +14,6 @@ class ActivityInline(admin.TabularInline):
     extra = 0
     
 @admin.register(Trip)
-
 class TripAdmin(admin.ModelAdmin):
     list_display = ("title", "owner", "status", "start_date", "end_date")
     list_filter = ("status", "start_date")
@@ -23,7 +22,6 @@ class TripAdmin(admin.ModelAdmin):
     inlines = [ParticipationInline, DestinationInline]
     
 @admin.register(Destination)
-
 class DestinationAdmin(admin.ModelAdmin):
     list_display = ("city", "country", "trip", "arrival_date", "departure_date")
     list_filter = ("country",)
@@ -31,14 +29,12 @@ class DestinationAdmin(admin.ModelAdmin):
     inlines = [ActivityInline]
     
 @admin.register(Activity)
-
 class ActivityAdmin(admin.ModelAdmin):
     list_display = ("name", "category", "destination", "date", "cost")
     list_filter = ("category", "date")
     search_fields = ("name", "description", "destination__city")
     
 @admin.register(Participation)
-
 class ParticipationAdmin(admin.ModelAdmin):
     list_display = ("user", "trip", "role", "joined_at")
     list_filter = ("role",)
