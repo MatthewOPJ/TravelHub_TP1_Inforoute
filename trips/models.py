@@ -44,3 +44,23 @@ class Trip(models.Model):
         validators.check_trip_dates(self.start_date, self.end_date)
         if self.pk:
             validators.check_trip_covers_destinations(self)
+            
+class Participation(models.Model):
+    class Role(models.TextChoices):
+        OWNER = "owner", "Propriétaire"
+        EDITOR = "editor", "Éditeur"
+        VIEWER = "viewer", "Lecteur"
+    trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name="participations")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="participations",
+    )
+    role = models.CharField(max_length=10, choices=Role.choices, default=Role.VIEWER)
+    joined_at = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["trip", "user"], name="unique_participation"),
+        ]
+    def __str__(self):
+        return f"{self.user} - {self.trip} ({self.role})"           
