@@ -42,3 +42,10 @@ def duplicate_trip(trip, user): # Cette fonction va copier les voyages avec leur
             ]
         )
     return copy
+
+def add_participant(trip, user, role): # Cette fonction est là afin de vérifier qu'on ne mets pas 2 fois le même participant.
+    if role == Participation.Role.OWNER:
+        raise ValidationError({"role": "Un voyage n'a qu'un seul propriétaire."})
+    if trip.owner_id == user.id or Participation.objects.filter(trip=trip, user=user).exists():
+        raise ValidationError({"username": "Cet utilisateur participe déjà au voyage."})
+    return Participation.objects.create(trip=trip, user=user, role=role)
