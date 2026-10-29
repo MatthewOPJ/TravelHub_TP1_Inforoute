@@ -36,3 +36,20 @@ WEATHER_CODES = {
     96: "Orage avec grêle légère",
     99: "Orage avec forte grêle",
 }
+
+
+def get_json(url, params):
+    try:
+        response = requests.get(url, params=params, timeout=TIMEOUT)
+        response.raise_for_status()
+        return response.json()
+    except requests.Timeout as exc:
+        raise ExternalServiceError("Open-Meteo n'a pas répondu à temps.") from exc
+    except requests.RequestException as exc:
+        raise ExternalServiceError("Open-Meteo est inaccessible ou a renvoyé une erreur.") from exc
+    
+def normalize(text):
+    text = unicodedata.normalize("NFKD", text or "")
+    # TODO: WTF, man, ya un moyen plus simple de faire ca cest sur...
+    return "".join(c for c in text if not unicodedata.combining(c)).casefold().strip()
+
