@@ -42,3 +42,58 @@ def internal_data(destination):
         "activities_total_cost": totals["total_cost"] or 0,
         "activities_by_category": list(by_category),
     }
+    
+# combine les données DB, REST et GraphQL
+def get_destination_details(destination):
+    result = {
+        "destination": internal_data(destination),
+        "location": None,
+        "weather": None,
+        "country": None,
+        "complete": False,
+    }
+    
+    # Géocodage (Open-Meteo)
+    location = None
+    try:
+        location = open_meteo.geocode(destination.city, destination.country)
+        result["location"] = make_block("open-meteo", "ok", location)
+    except LocationNotFound as exc:
+        result["location"] = make_block("open-meteo", "not_found", message=str(exc))
+    except ExternalServiceError as exc:
+        result["location"] = make_block("open-meteo", "unavailable", message=str(exc))
+        
+    # Open-Meteo, REST
+    if location:
+        try:
+            weather = open_meteo.get_weather(location["latitude"], location["longitude"])
+            result["weather"] = make_block("open-meteo", "ok", weather)
+        except NoDataAvailable as exc:
+            result["weather"] = make_block("open-meteo", "no_data", message=str(exc))
+        except ExternalServiceError as exc:
+            result["weather"] = make_block("open-meteo", "unavailable", message=str(exc))
+    else:
+        result["weather"] = make_block(
+            "open-meteo", 
+            result["location"]["status"], 
+            message="Destination non identifiée : météo indisponible."
+        )
+        
+    # Pays, GraphQL
+    if location:
+        try:
+            country = countries.get_country(location["country_code"])
+            result["country"] = make_block("countries-graphql", "ok", country)
+        except NoDataAvailable as exc:
+            result["country"] = make_block("countries-graphql", "no_data", message=str(exc))
+        except ExternalServiceError as exc:
+            result["country"] = make_block("countries-graphql", "unavailable", message=str(exc))
+    else:
+        result["country"] = make_block(
+            "countries-graphql", 
+            result["location"]["status"], 
+            message="Code pays inconnu : destination non identifiée."
+        )
+        
+    result["complete"] = all(result[k]["status"] == "ok" for k in ("location", "weather", "country"))
+    return result
