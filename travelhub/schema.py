@@ -16,7 +16,7 @@ User = get_user_model()
 class UserType(DjangoObjectType):
     class Meta:
         model = User
-        fields = ("id", "username")  # jamais le mot de passe ni le courriel
+        fields = ("id", "username")  # Pas d'informations confidentielles comme un mot de passe ou un courriel
         
 class ParticipationType(DjangoObjectType):
     class Meta:
@@ -61,10 +61,9 @@ def get_destination(user, destination_id):
     return get_or_error(queryset, destination_id, "Destination")
 
 def get_activity(user, activity_id):
-    queryset = Activity.objects.filter(destination__trip__in=visible_trips(user)).select_related(
-        "destination", "destination__trip"
-    )
+    queryset = Activity.objects.filter(destination__trip__in=visible_trips(user)).select_related("destination", "destination__trip")
     return get_or_error(queryset, activity_id, "Activité")
+
 def check_can_edit(user, trip):
     if not can_edit_content(user, trip):
         raise GraphQLError("Vous n'avez pas le droit de modifier ce voyage.")
@@ -157,7 +156,7 @@ class Query(graphene.ObjectType):
         return json.loads(json.dumps(details, cls=DjangoJSONEncoder))  # dates et Decimal -> texte
     
 # Mutations pour Trips avec les options Create, Update et Delete
-class CreateTrip(graphene.Mutation):
+class CreateTrip(graphene.Mutation): # Create Trip
     class Arguments:
         title = graphene.String(required=True)
         description = graphene.String()
@@ -174,7 +173,7 @@ class CreateTrip(graphene.Mutation):
             raise GraphQLError(" ".join(exc.messages))
         return CreateTrip(trip=trip)
     
-class UpdateTrip(graphene.Mutation):
+class UpdateTrip(graphene.Mutation): # Update Trip
     class Arguments:
         id = graphene.ID(required=True)
         title = graphene.String()
@@ -193,7 +192,7 @@ class UpdateTrip(graphene.Mutation):
             setattr(trip, field, value)
         return UpdateTrip(trip=save_or_error(trip))
     
-class DeleteTrip(graphene.Mutation):
+class DeleteTrip(graphene.Mutation): # Delete Trip
     class Arguments:
         id = graphene.ID(required=True)
     ok = graphene.Boolean()
@@ -207,7 +206,7 @@ class DeleteTrip(graphene.Mutation):
         return DeleteTrip(ok=True)
     
 # Mutations pour Destinations avec les options Create, Update et Delete
-class CreateDestination(graphene.Mutation):
+class CreateDestination(graphene.Mutation): # Create Destination
     class Arguments:
         trip_id = graphene.ID(required=True)
         city = graphene.String(required=True)
@@ -222,7 +221,7 @@ class CreateDestination(graphene.Mutation):
         check_can_edit(user, trip)
         return CreateDestination(destination=save_or_error(Destination(trip=trip, **data)))
     
-class UpdateDestination(graphene.Mutation):
+class UpdateDestination(graphene.Mutation): # Update Destination
     class Arguments:
         id = graphene.ID(required=True)
         city = graphene.String()
@@ -239,7 +238,7 @@ class UpdateDestination(graphene.Mutation):
             setattr(destination, field, value)
         return UpdateDestination(destination=save_or_error(destination))
     
-class DeleteDestination(graphene.Mutation):
+class DeleteDestination(graphene.Mutation): # Delete Destination
     class Arguments:
         id = graphene.ID(required=True)
     ok = graphene.Boolean()
@@ -252,7 +251,7 @@ class DeleteDestination(graphene.Mutation):
         return DeleteDestination(ok=True)
     
 # Mutations pour Activities avec les options Create, Update et Delete
-class CreateActivity(graphene.Mutation):
+class CreateActivity(graphene.Mutation): # Create Activity
     class Arguments:
         destination_id = graphene.ID(required=True)
         name = graphene.String(required=True)
@@ -268,7 +267,7 @@ class CreateActivity(graphene.Mutation):
         check_can_edit(user, destination.trip)
         return CreateActivity(activity=save_or_error(Activity(destination=destination, **data)))
     
-class UpdateActivity(graphene.Mutation):
+class UpdateActivity(graphene.Mutation): # Update Activity
     class Arguments:
         id = graphene.ID(required=True)
         name = graphene.String()
@@ -286,7 +285,7 @@ class UpdateActivity(graphene.Mutation):
             setattr(activity, field, value)
         return UpdateActivity(activity=save_or_error(activity))
     
-class DeleteActivity(graphene.Mutation):
+class DeleteActivity(graphene.Mutation): # Delete Activity
     class Arguments:
         id = graphene.ID(required=True)
     ok = graphene.Boolean()
@@ -299,7 +298,7 @@ class DeleteActivity(graphene.Mutation):
         return DeleteActivity(ok=True)
     
     
-    
+# Cette classe vient appeler TOUS les classes faites plus haut
 class Mutation(graphene.ObjectType):
     create_trip = CreateTrip.Field()
     update_trip = UpdateTrip.Field()
