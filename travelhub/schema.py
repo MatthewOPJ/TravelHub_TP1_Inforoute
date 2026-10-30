@@ -155,3 +155,53 @@ class Query(graphene.ObjectType):
         destination = get_destination(require_user(info), id)
         details = get_destination_details(destination)
         return json.loads(json.dumps(details, cls=DjangoJSONEncoder))  # dates et Decimal -> texte
+    
+    
+class CreateTrip(graphene.Mutation):
+    class Arguments:
+        title = graphene.String(required=True)
+        description = graphene.String()
+        start_date = graphene.Date(required=True)
+        end_date = graphene.Date(required=True)
+        status = graphene.String()
+    trip = graphene.Field(TripType)
+    @classmethod
+    def mutate(cls, root, info, **data):
+        user = require_user(info)
+        try:
+            trip = services.create_trip(owner=user, **data)  # transaction : voyage + participation
+        except DjangoValidationError as exc:
+            raise GraphQLError(" ".join(exc.messages))
+        return CreateTrip(trip=trip)
+    
+class UpdateTrip(graphene.Mutation):
+    class Arguments:
+        id = graphene.ID(required=True)
+        title = graphene.String()
+        description = graphene.String()
+        start_date = graphene.Date()
+        end_date = graphene.Date()
+        status = graphene.String()
+    trip = graphene.Field(TripType)
+    @classmethod
+    def mutate(cls, root, info, id, **data):
+        user = require_user(info)
+        trip = get_trip(user, id)
+        if not is_owner(user, trip):
+            raise GraphQLError("Seul le propriétaire peut modifier ce voyage.")
+        for field, value in data.items():
+            setattr(trip, field, value)
+        return UpdateTrip(trip=save_or_error(trip))
+    
+class DeleteTrip(graphene.Mutation):
+    class Arguments:
+        id = graphene.ID(required=True)
+    ok = graphene.Boolean()
+    @classmethod
+    def mutate(cls, root, info, id):
+        user = require_user(info)
+        trip = get_trip(user, id)
+        if not is_owner(user, trip):
+            raise GraphQLError("Seul le propriétaire peut supprimer ce voyage.")
+        trip.delete()
+        return DeleteTrip(ok=True)
