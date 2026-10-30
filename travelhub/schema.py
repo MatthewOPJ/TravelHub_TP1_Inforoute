@@ -297,3 +297,18 @@ class DeleteActivity(graphene.Mutation):
         check_can_edit(user, activity.destination.trip)
         activity.delete()
         return DeleteActivity(ok=True)
+    
+    
+    
+class Mutation(graphene.ObjectType):
+    create_trip = CreateTrip.Field()
+    update_trip = UpdateTrip.Field()
+    delete_trip = DeleteTrip.Field()
+    create_destination = CreateDestination.Field()
+    update_destination = UpdateDestination.Field()
+    delete_destination = DeleteDestination.Field()
+    create_activity = CreateActivity.Field()
+    update_activity = UpdateActivity.Field()
+    delete_activity = DeleteActivity.Field()
+    
+schema = graphene.Schema(query=Query, mutation=Mutation)
