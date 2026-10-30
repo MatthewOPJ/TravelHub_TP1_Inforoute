@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'accounts.apps.AccountsConfig',
     'trips.apps.TripsConfig',
     'integrations.apps.IntegrationsConfig',
+    'graphene_django'
 ]
 
 MIDDLEWARE = [
@@ -139,6 +140,11 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+}
+
+# GraphQL
+GRAPHENE = {
+    "SCHEMA": "travelhub.schema.schema",
 }
 
 # JWT = JSON Web Token
