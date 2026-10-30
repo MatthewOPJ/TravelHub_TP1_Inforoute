@@ -81,3 +81,77 @@ ORDER_FIELDS = {
     "start_date", "-start_date", "end_date", "-end_date",
     "title", "-title", "created_at", "-created_at",
 }
+
+
+class Query(graphene.ObjectType):
+    me = graphene.Field(UserType)
+    trips = graphene.List(
+        TripType,
+        status=graphene.String(),
+        search=graphene.String(),
+        order_by=graphene.String(),
+    )
+    trip = graphene.Field(TripType, id=graphene.ID(required=True))
+    destinations = graphene.List(DestinationType, trip_id=graphene.ID(), country=graphene.String())
+    activities = graphene.List(
+        ActivityType,
+        destination_id=graphene.ID(),
+        category=graphene.String(),
+        min_cost=graphene.Float(),
+        max_cost=graphene.Float(),
+        date_from=graphene.Date(),
+        date_to=graphene.Date(),
+    )
+    destination_details = graphene.Field(GenericScalar, id=graphene.ID(required=True))
+    
+    def resolve_me(root, info):
+        return require_user(info)
+    
+    def resolve_trips(root, info, status=None, search=None, order_by=None):
+        trips = visible_trips(require_user(info))
+        if status:
+            trips = trips.filter(status=status)
+        if search:
+            trips = trips.filter(title__icontains=search)
+        if order_by:
+            if order_by not in ORDER_FIELDS:
+                raise GraphQLError(f"Tri non permis. Valeurs possibles : {sorted(ORDER_FIELDS)}")
+            trips = trips.order_by(order_by)
+        return trips
+    
+    def resolve_trip(root, info, id):
+        return get_trip(require_user(info), id)
+    
+    def resolve_destinations(root, info, trip_id=None, country=None):
+        user = require_user(info)
+        destinations = Destination.objects.filter(trip__in=visible_trips(user))
+        if trip_id:
+            destinations = destinations.filter(trip_id=trip_id)
+        if country:
+            destinations = destinations.filter(country__icontains=country)
+        return destinations
+    
+    def resolve_activities(
+        root, info, destination_id=None, category=None, min_cost=None, max_cost=None,
+        date_from=None, date_to=None,
+    ):
+        user = require_user(info)
+        activities = Activity.objects.filter(destination__trip__in=visible_trips(user))
+        if destination_id:
+            activities = activities.filter(destination_id=destination_id)
+        if category:
+            activities = activities.filter(category=category)
+        if min_cost is not None:
+            activities = activities.filter(cost__gte=min_cost)
+        if max_cost is not None:
+            activities = activities.filter(cost__lte=max_cost)
+        if date_from:
+            activities = activities.filter(date__gte=date_from)
+        if date_to:
+            activities = activities.filter(date__lte=date_to)
+        return activities
+    
+    def resolve_destination_details(root, info, id):
+        destination = get_destination(require_user(info), id)
+        details = get_destination_details(destination)
+        return json.loads(json.dumps(details, cls=DjangoJSONEncoder))  # dates et Decimal -> texte
