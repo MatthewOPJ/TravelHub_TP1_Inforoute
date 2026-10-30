@@ -156,7 +156,7 @@ class Query(graphene.ObjectType):
         details = get_destination_details(destination)
         return json.loads(json.dumps(details, cls=DjangoJSONEncoder))  # dates et Decimal -> texte
     
-    
+# Mutations pour Trips avec les options Create, Update et Delete
 class CreateTrip(graphene.Mutation):
     class Arguments:
         title = graphene.String(required=True)
@@ -205,3 +205,95 @@ class DeleteTrip(graphene.Mutation):
             raise GraphQLError("Seul le propriétaire peut supprimer ce voyage.")
         trip.delete()
         return DeleteTrip(ok=True)
+    
+# Mutations pour Destinations avec les options Create, Update et Delete
+class CreateDestination(graphene.Mutation):
+    class Arguments:
+        trip_id = graphene.ID(required=True)
+        city = graphene.String(required=True)
+        country = graphene.String(required=True)
+        arrival_date = graphene.Date(required=True)
+        departure_date = graphene.Date(required=True)
+    destination = graphene.Field(DestinationType)
+    @classmethod
+    def mutate(cls, root, info, trip_id, **data):
+        user = require_user(info)
+        trip = get_trip(user, trip_id)
+        check_can_edit(user, trip)
+        return CreateDestination(destination=save_or_error(Destination(trip=trip, **data)))
+    
+class UpdateDestination(graphene.Mutation):
+    class Arguments:
+        id = graphene.ID(required=True)
+        city = graphene.String()
+        country = graphene.String()
+        arrival_date = graphene.Date()
+        departure_date = graphene.Date()
+    destination = graphene.Field(DestinationType)
+    @classmethod
+    def mutate(cls, root, info, id, **data):
+        user = require_user(info)
+        destination = get_destination(user, id)
+        check_can_edit(user, destination.trip)
+        for field, value in data.items():
+            setattr(destination, field, value)
+        return UpdateDestination(destination=save_or_error(destination))
+    
+class DeleteDestination(graphene.Mutation):
+    class Arguments:
+        id = graphene.ID(required=True)
+    ok = graphene.Boolean()
+    @classmethod
+    def mutate(cls, root, info, id):
+        user = require_user(info)
+        destination = get_destination(user, id)
+        check_can_edit(user, destination.trip)
+        destination.delete()
+        return DeleteDestination(ok=True)
+    
+# Mutations pour Activities avec les options Create, Update et Delete
+class CreateActivity(graphene.Mutation):
+    class Arguments:
+        destination_id = graphene.ID(required=True)
+        name = graphene.String(required=True)
+        description = graphene.String()
+        category = graphene.String()
+        date = graphene.Date(required=True)
+        cost = graphene.Float()
+    activity = graphene.Field(ActivityType)
+    @classmethod
+    def mutate(cls, root, info, destination_id, **data):
+        user = require_user(info)
+        destination = get_destination(user, destination_id)
+        check_can_edit(user, destination.trip)
+        return CreateActivity(activity=save_or_error(Activity(destination=destination, **data)))
+    
+class UpdateActivity(graphene.Mutation):
+    class Arguments:
+        id = graphene.ID(required=True)
+        name = graphene.String()
+        description = graphene.String()
+        category = graphene.String()
+        date = graphene.Date()
+        cost = graphene.Float()
+    activity = graphene.Field(ActivityType)
+    @classmethod
+    def mutate(cls, root, info, id, **data):
+        user = require_user(info)
+        activity = get_activity(user, id)
+        check_can_edit(user, activity.destination.trip)
+        for field, value in data.items():
+            setattr(activity, field, value)
+        return UpdateActivity(activity=save_or_error(activity))
+    
+class DeleteActivity(graphene.Mutation):
+    class Arguments:
+        id = graphene.ID(required=True)
+    ok = graphene.Boolean()
+    @classmethod
+    def mutate(cls, root, info, id):
+        user = require_user(info)
+        activity = get_activity(user, id)
+        check_can_edit(user, activity.destination.trip)
+        activity.delete()
+        return DeleteActivity(ok=True)
