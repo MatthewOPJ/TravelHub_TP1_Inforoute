@@ -134,3 +134,10 @@ class TripSerializer(serializers.ModelSerializer):
             from . import services # import local, pour éviter que ca chiale
             return services.create_trip(owner=self.context["request"].user, **validated_data)
         
+
+
+class TripDetailSerializer(TripSerializer):
+    destinations = DestinationWithActivitiesSerializer(many=True, read_only=True)
+    participations = ParticipationSerializer(many=True, read_only=True)
+    class Meta(TripSerializer.Meta):
+        fields = TripSerializer.Meta.fields + ["destinations", "participations"]
