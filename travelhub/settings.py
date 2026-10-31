@@ -142,6 +142,13 @@ REST_FRAMEWORK = {
     ],
 }
 
+SPECTACULAR_SETTINGS = {
+    "TITLE": "TravelHub API",
+    "DESCRIPTION": "API REST de planification et de gestion de voyages",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+}
+
 # GraphQL
 GRAPHENE = {
     "SCHEMA": "travelhub.schema.schema",
